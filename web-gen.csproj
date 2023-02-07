@@ -5,6 +5,10 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>web_gen</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
+	<PublishSingleFile>true</PublishSingleFile>
+	<PublishReadyToRun>true</PublishReadyToRun>
+	<SelfContained>false</SelfContained>
+	<RuntimeIdentifier>linux-x64</RuntimeIdentifier>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 

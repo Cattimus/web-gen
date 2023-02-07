@@ -56,6 +56,16 @@ while(i < args.Count())
 check_dirs();
 print_info();
 
+if(template_dir != "NOT PROVIDED")
+{
+	populate_templates(template_dir);
+}
+
+foreach(var template in template_files)
+{
+	Console.WriteLine(template.Key + " - " + template.Value);
+}
+
 //display program usage prompt
 void display_helptext()
 {
@@ -69,10 +79,11 @@ void display_helptext()
 //print configuration info
 void print_info()
 {
-	Console.WriteLine("Source directory: " + source_dir);
-	Console.WriteLine("Template directory: " + template_dir);
-	Console.WriteLine("Build directory: " + build_dir);
-	Console.WriteLine("Parse extensions: " + String.Join(", ", parse_files));
+	Console.WriteLine("[WEB-GEN]");
+	Console.WriteLine("Source: " + source_dir);
+	Console.WriteLine("Template: " + template_dir);
+	Console.WriteLine("Build: " + build_dir);
+	Console.WriteLine("Parse files: [" + String.Join(", ", parse_files) + "]");
 }
 
 //check that all directories exist
@@ -120,5 +131,39 @@ void check_dirs()
 	if(error)
 	{
 		Environment.Exit(-1);
+	}
+}
+
+//populate the template files into memory
+void populate_templates(string path)
+{
+	var templates = Directory.GetFiles(path);
+	var dirs = Directory.GetDirectories(path);
+
+	//check all files in directory
+	foreach(var file in templates)
+	{
+		//check if the file is of the correct type
+		bool parse = false;
+		foreach(var filetype in parse_files)
+		{
+			if(file.Contains(filetype))
+			{
+				parse = true;
+				break;
+			}
+		}
+
+		//read file into memory
+		if(parse)
+		{
+			template_files[file] = File.ReadAllText(file);
+		}
+	}
+
+	//recursively get all files in subdirectories
+	foreach(var dir in dirs)
+	{
+		populate_templates(dir);
 	}
 }

@@ -1,4 +1,5 @@
-﻿string source_dir   = "NOT PROVIDED";
+﻿string current_dir  = Environment.CurrentDirectory;
+string source_dir   = "NOT PROVIDED";
 string build_dir    = Environment.CurrentDirectory + "/build";
 string template_dir = "NOT PROVIDED";
 
@@ -6,9 +7,6 @@ string template_dir = "NOT PROVIDED";
 List<string> parse_files = new List<string>();
 Dictionary<string, string> source_files = new Dictionary<string, string>();
 Dictionary<string, string> template_files = new Dictionary<string, string>();
-
-//length of the current working directory in characters (so it can be removed later)
-int dirlen = Environment.CurrentDirectory.ToString().Count();
 
 //no input is provided
 if(args.Count() < 1)
@@ -25,19 +23,19 @@ while(i < args.Count())
 	{
 		//template directory
 		case "-t":
-			template_dir = Environment.CurrentDirectory + "/" + args[i+1];
+			template_dir = current_dir + "/" + args[i+1];
 			i += 2;
 		break;
 
 		//build directory
 		case "-b":
-			build_dir = Environment.CurrentDirectory + "/" + args[i+1];
+			build_dir = current_dir + "/" + args[i+1];
 			i += 2;
 		break;
 
 		//source directory
 		case "-s":
-			source_dir = Environment.CurrentDirectory + "/" + args[i+1];
+			source_dir = current_dir + "/" + args[i+1];
 			i += 2;
 		break;
 
@@ -65,10 +63,12 @@ print_info();
 //populate files into memory
 if(template_dir != "NOT PROVIDED")
 {
+	Console.WriteLine("Loading templates into memory...");
 	populate(ref template_files, template_dir);
 }
 if(source_dir != "NOT_PROVIDED")
 {
+	Console.WriteLine("Loading source files into memory...");
 	populate(ref source_files, source_dir);
 }
 
@@ -78,7 +78,9 @@ foreach(var file in source_files)
 {
 	var text = file.Value;
 	string output_file = "";
+	Console.WriteLine("file: " + file.Key);
 
+	//execute all copy directives in file
 	int line_count = 1;
 	foreach(var line in text.Split("\n"))
 	{
@@ -102,7 +104,7 @@ foreach(var file in source_files)
 			foreach(var template in template_files)
 			{
 				//filenames are a match
-				if(template.Key.Remove(dirlen).Equals(filename) || template.Key.Equals(filename))
+				if(template.Key.Remove(0, template_dir.Length + 1).Equals(filename) || template.Key.Equals(filename))
 				{
 					//copy template to file (at proper indentation level)
 					foreach(var template_line in template.Value.Split("\n"))
@@ -124,6 +126,11 @@ foreach(var file in source_files)
 
 		line_count++;
 	}
+
+	//write constructed file to output
+	var output_filename = build_dir + file.Key.Remove(0, source_dir.Length);
+	File.WriteAllText(output_filename, output_file);
+
 }
 
 //display program usage prompt

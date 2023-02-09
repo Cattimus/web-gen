@@ -163,11 +163,32 @@ void handle_args()
 void display_helptext()
 {
 	Console.WriteLine();
-	Console.WriteLine("web-gen usage:");
-	Console.WriteLine("-t [relative path]: path to the directory that holds template files");
-	Console.WriteLine("-s [relative path]: select directory that holds source files");
-	Console.WriteLine("-b [relative path]: select directory where compiled files will go. (defaults 'build' in current dir)");
-	Console.WriteLine("-parse [comma,separated,list,of,file,extensions]: enable parsing files with these extensions");
+	Console.WriteLine("[web-gen]:");
+
+	Console.WriteLine("-s,-source (path)");
+	Console.WriteLine("Path to the folder that contains source files");
+	Console.WriteLine();
+
+	Console.WriteLine("-p,-parse (list,of,extensions)");
+	Console.WriteLine("Tell web-gen which types of files you want to be run through the parser.");
+	Console.WriteLine();
+
+	Console.WriteLine("-t,-template (path)");
+	Console.WriteLine("Path to the folder that contains templates.");
+	Console.WriteLine();
+
+	Console.WriteLine("-b,-build (path)");
+	Console.WriteLine("Path to the output(build) directory.");
+	Console.WriteLine();
+
+	Console.WriteLine("-A");
+	Console.WriteLine("[NOT IMPLEMENTED] - use absolute paths instead of relative paths");
+	Console.WriteLine("All paths are relative to the current working directory by default.");
+	Console.WriteLine();
+
+	Console.WriteLine("[Directives]:");
+	Console.WriteLine("Copy: //!web-copy:[template name]");
+	Console.WriteLine("Copy a template into the source code.");
 	Console.WriteLine();
 }
 

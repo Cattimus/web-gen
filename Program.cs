@@ -1,10 +1,13 @@
-﻿string source_dir   = "NOT PROVIDED";
+﻿//TODO - check if line "starts with" (excluding whitespace) //!web-copy:filename
+//TODO - keep track of indentation levels on each line
+
+string source_dir   = "NOT PROVIDED";
 string build_dir    = Environment.CurrentDirectory + "/build";
 string template_dir = "NOT PROVIDED";
 
 //lists to hold data
-List<string> source_files = new List<string>();
 List<string> parse_files = new List<string>();
+Dictionary<string, string> source_files = new Dictionary<string, string>();
 Dictionary<string, string> template_files = new Dictionary<string, string>();
 
 //no input is provided
@@ -58,12 +61,12 @@ print_info();
 
 if(template_dir != "NOT PROVIDED")
 {
-	populate_templates(template_dir);
+	populate(ref template_files, template_dir);
 }
 
-foreach(var template in template_files)
+if(source_dir != "NOT_PROVIDED")
 {
-	Console.WriteLine(template.Key + " - " + template.Value);
+	populate(ref source_files, source_dir);
 }
 
 //display program usage prompt
@@ -134,14 +137,14 @@ void check_dirs()
 	}
 }
 
-//populate the template files into memory
-void populate_templates(string path)
+//populate files into memory recursively
+void populate(ref Dictionary<string,string> container, string path)
 {
-	var templates = Directory.GetFiles(path);
+	var files = Directory.GetFiles(path);
 	var dirs = Directory.GetDirectories(path);
 
 	//check all files in directory
-	foreach(var file in templates)
+	foreach(var file in files)
 	{
 		//check if the file is of the correct type
 		bool parse = false;
@@ -157,13 +160,13 @@ void populate_templates(string path)
 		//read file into memory
 		if(parse)
 		{
-			template_files[file] = File.ReadAllText(file);
+			container[file] = File.ReadAllText(file);
 		}
 	}
 
 	//recursively get all files in subdirectories
 	foreach(var dir in dirs)
 	{
-		populate_templates(dir);
+		populate(ref container, dir);
 	}
 }

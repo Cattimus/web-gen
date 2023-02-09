@@ -15,49 +15,9 @@ if(args.Count() < 1)
 	Environment.Exit(-1);
 }
 
-//parse command line arguments
-int i = 0;
-while(i < args.Count())
-{
-	switch(args[i])
-	{
-		//template directory
-		case "-t":
-			template_dir = current_dir + "/" + args[i+1];
-			i += 2;
-		break;
-
-		//build directory
-		case "-b":
-			build_dir = current_dir + "/" + args[i+1];
-			i += 2;
-		break;
-
-		//source directory
-		case "-s":
-			source_dir = current_dir + "/" + args[i+1];
-			i += 2;
-		break;
-
-		//parse extensions
-		case "-parse":
-			parse_files.AddRange(args[i+1].Split(","));
-			i += 2;
-		break;
-
-		//unrecognized argument
-		default:
-			Console.WriteLine("Argument not recognized: '" + args[i] + "'");
-			display_helptext();
-			Environment.Exit(-1);
-		break;
-	}
-}
-
-//check that directories exist
+//set up environment for program to run
+handle_args();
 check_dirs();
-
-//print info to the user
 print_info();
 
 //populate files into memory
@@ -99,6 +59,7 @@ foreach(var file in source_files)
 				continue;
 			}
 
+			bool match_found = false;
 			//remove working directory from filename (for comparison)
 			string filename = line.Split(":")[1];
 			foreach(var template in template_files)
@@ -113,8 +74,15 @@ foreach(var file in source_files)
 					}
 
 					//we don't need to keep searching for files
+					match_found = true;
 					break;
 				}
+			}
+
+			//template directive was included but no match was found
+			if(!match_found)
+			{
+				Console.WriteLine("WARNING - copy directive was found but no template match was found. Filename: " + filename);
 			}
 		}
 
@@ -131,6 +99,48 @@ foreach(var file in source_files)
 	var output_filename = build_dir + file.Key.Remove(0, source_dir.Length);
 	File.WriteAllText(output_filename, output_file);
 
+}
+
+//parse command line arguments
+void handle_args()
+{
+	int i = 0;
+	while(i < args.Count())
+	{
+		switch(args[i])
+		{
+			//template directory
+			case "-t":
+				template_dir = current_dir + "/" + args[i+1];
+				i += 2;
+			break;
+
+			//build directory
+			case "-b":
+				build_dir = current_dir + "/" + args[i+1];
+				i += 2;
+			break;
+
+			//source directory
+			case "-s":
+				source_dir = current_dir + "/" + args[i+1];
+				i += 2;
+			break;
+
+			//parse extensions
+			case "-parse":
+				parse_files.AddRange(args[i+1].Split(","));
+				i += 2;
+			break;
+
+			//unrecognized argument
+			default:
+				Console.WriteLine("Argument not recognized: '" + args[i] + "'");
+				display_helptext();
+				Environment.Exit(-1);
+			break;
+		}
+	}
 }
 
 //display program usage prompt

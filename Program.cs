@@ -5,6 +5,7 @@ string template_dir = "NOT PROVIDED";
 
 //lists to hold data
 List<string> parse_files = new List<string>();
+List<string> direct_copy = new List<string>();
 Dictionary<string, string> source_files = new Dictionary<string, string>();
 Dictionary<string, string> template_files = new Dictionary<string, string>();
 
@@ -32,15 +33,26 @@ if(source_dir != "NOT_PROVIDED")
 	populate(ref source_files, source_dir);
 }
 
-//TODO - this could use some optimization (and refactoring. it is ugly)
-//go through each source file
+Console.WriteLine("Copying directories to build dir...");
+copy_dirs(build_dir, source_dir);
+
+//copy non-parsing files to build
+Console.WriteLine("Copying files that will not be parsed...");
+foreach(var file in direct_copy)
+{
+	var output_name = build_dir + file.Remove(0, source_dir.Length);
+	File.Copy(file, output_name, true);
+	
+}
+
+//parse all files that require parsing
+Console.WriteLine("Parsing files...");
 foreach(var file in source_files)
 {
 	var text = file.Value;
 	string output_file = "";
-	Console.WriteLine("file: " + file.Key);
 
-	//execute all copy directives in file
+	//find all copy directives in file
 	int line_count = 1;
 	foreach(var line in text.Split("\n"))
 	{
@@ -59,8 +71,8 @@ foreach(var file in source_files)
 				continue;
 			}
 
+			//check for file in templates
 			bool match_found = false;
-			//remove working directory from filename (for comparison)
 			string filename = line.Split(":")[1];
 			foreach(var template in template_files)
 			{
@@ -73,7 +85,7 @@ foreach(var file in source_files)
 						output_file += whitespace + template_line + "\n";
 					}
 
-					//we don't need to keep searching for files
+					//file has been found, we do not need to keep searching
 					match_found = true;
 					break;
 				}
@@ -82,11 +94,14 @@ foreach(var file in source_files)
 			//template directive was included but no match was found
 			if(!match_found)
 			{
-				Console.WriteLine("WARNING - copy directive was found but no template match was found. Filename: " + filename);
+				Console.WriteLine();
+				Console.WriteLine("WARNING - copy directive was found on line:" + line_count + " of " + file.Key);
+				Console.WriteLine("Template: " + filename + " could not be found.");
+				Console.WriteLine();
 			}
 		}
 
-		//copy line normally
+		//no template directive on line
 		else
 		{
 			output_file += line + "\n";
@@ -100,6 +115,7 @@ foreach(var file in source_files)
 	File.WriteAllText(output_filename, output_file);
 
 }
+Console.WriteLine("Done.");
 
 //parse command line arguments
 void handle_args()
@@ -146,21 +162,25 @@ void handle_args()
 //display program usage prompt
 void display_helptext()
 {
+	Console.WriteLine();
 	Console.WriteLine("web-gen usage:");
 	Console.WriteLine("-t [relative path]: path to the directory that holds template files");
 	Console.WriteLine("-s [relative path]: select directory that holds source files");
 	Console.WriteLine("-b [relative path]: select directory where compiled files will go. (defaults 'build' in current dir)");
 	Console.WriteLine("-parse [comma,separated,list,of,file,extensions]: enable parsing files with these extensions");
+	Console.WriteLine();
 }
 
 //print configuration info
 void print_info()
 {
+	Console.WriteLine();
 	Console.WriteLine("[WEB-GEN]");
 	Console.WriteLine("Source: " + source_dir);
 	Console.WriteLine("Template: " + template_dir);
 	Console.WriteLine("Build: " + build_dir);
 	Console.WriteLine("Parse files: [" + String.Join(", ", parse_files) + "]");
+	Console.WriteLine();
 }
 
 //check that all directories exist
@@ -236,11 +256,38 @@ void populate(ref Dictionary<string,string> container, string path)
 		{
 			container[file] = File.ReadAllText(file);
 		}
+		else
+		{
+			//if file is not a template, it should be added to the direct_copy list
+			if(!file.Contains(template_dir))
+			{
+				direct_copy.Add(file);
+			}
+		}
 	}
 
 	//recursively get all files in subdirectories
 	foreach(var dir in dirs)
 	{
 		populate(ref container, dir);
+	}
+}
+
+//copy directory structure from src to dest
+void copy_dirs(string dest, string src)
+{
+	var dirs = Directory.GetDirectories(src);
+
+	foreach(var dir in dirs)
+	{
+		//create directory if it doesn't exist
+		var stub = dir.Remove(0, src.Length);
+		if(!Directory.Exists(dest + stub))
+		{
+			Directory.CreateDirectory(dest + stub);
+		}
+
+		//recursively copy any subdirectories
+		copy_dirs(dest + stub, src + stub);
 	}
 }

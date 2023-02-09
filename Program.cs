@@ -126,18 +126,21 @@ void handle_args()
 		switch(args[i])
 		{
 			//template directory
+			case "-template":
 			case "-t":
 				template_dir = current_dir + "/" + args[i+1];
 				i += 2;
 			break;
 
 			//build directory
+			case "-build":
 			case "-b":
 				build_dir = current_dir + "/" + args[i+1];
 				i += 2;
 			break;
 
 			//source directory
+			case "-source":
 			case "-s":
 				source_dir = current_dir + "/" + args[i+1];
 				i += 2;
@@ -145,6 +148,7 @@ void handle_args()
 
 			//parse extensions
 			case "-parse":
+			case "-p":
 				parse_files.AddRange(args[i+1].Split(","));
 				i += 2;
 			break;

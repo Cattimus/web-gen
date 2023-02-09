@@ -1,7 +1,4 @@
-﻿//TODO - check if line "starts with" (excluding whitespace) //!web-copy:filename
-//TODO - keep track of indentation levels on each line
-
-string source_dir   = "NOT PROVIDED";
+﻿string source_dir   = "NOT PROVIDED";
 string build_dir    = Environment.CurrentDirectory + "/build";
 string template_dir = "NOT PROVIDED";
 
@@ -9,6 +6,9 @@ string template_dir = "NOT PROVIDED";
 List<string> parse_files = new List<string>();
 Dictionary<string, string> source_files = new Dictionary<string, string>();
 Dictionary<string, string> template_files = new Dictionary<string, string>();
+
+//length of the current working directory in characters (so it can be removed later)
+int dirlen = Environment.CurrentDirectory.ToString().Count();
 
 //no input is provided
 if(args.Count() < 1)
@@ -56,17 +56,74 @@ while(i < args.Count())
 	}
 }
 
+//check that directories exist
 check_dirs();
+
+//print info to the user
 print_info();
 
+//populate files into memory
 if(template_dir != "NOT PROVIDED")
 {
 	populate(ref template_files, template_dir);
 }
-
 if(source_dir != "NOT_PROVIDED")
 {
 	populate(ref source_files, source_dir);
+}
+
+//TODO - this could use some optimization (and refactoring. it is ugly)
+//go through each source file
+foreach(var file in source_files)
+{
+	var text = file.Value;
+	string output_file = "";
+
+	int line_count = 1;
+	foreach(var line in text.Split("\n"))
+	{
+		//line contains a copy directive
+		if(line.Contains("//!web-copy:"))
+		{
+			string whitespace = line.Split("/")[0];
+
+			//invalid copy directive
+			if(!string.IsNullOrWhiteSpace(whitespace))
+			{
+				Console.WriteLine("Warning - Copy directive reached but is invalid.");
+				Console.WriteLine("File: " + file.Key + " at line: " + line_count);
+				output_file += line + "\n";
+				line_count++;
+				continue;
+			}
+
+			//remove working directory from filename (for comparison)
+			string filename = line.Split(":")[1];
+			foreach(var template in template_files)
+			{
+				//filenames are a match
+				if(template.Key.Remove(dirlen).Equals(filename) || template.Key.Equals(filename))
+				{
+					//copy template to file (at proper indentation level)
+					foreach(var template_line in template.Value.Split("\n"))
+					{
+						output_file += whitespace + template_line + "\n";
+					}
+
+					//we don't need to keep searching for files
+					break;
+				}
+			}
+		}
+
+		//copy line normally
+		else
+		{
+			output_file += line + "\n";
+		}
+
+		line_count++;
+	}
 }
 
 //display program usage prompt

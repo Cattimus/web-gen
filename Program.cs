@@ -29,7 +29,6 @@ foreach(var file in Data.direct_copy)
 {
 	var output_name = Data.build_dir + file.Remove(0, Data.source_dir.Length);
 	File.Copy(file, output_name, true);
-	
 }
 
 //parse all files that require parsing
@@ -39,7 +38,7 @@ foreach(var file in Data.source_files)
 	var text = file.Value;
 	string output_file = "";
 
-	//find all copy directives in file
+	//find all directives in file
 	int line_count = 1;
 	foreach(var line in text.Split("\n"))
 	{

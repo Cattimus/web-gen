@@ -14,16 +14,11 @@ Utilities.check_dirs();
 Utilities.print_info();
 
 //populate files into memory
-if(Data.template_dir != "NOT PROVIDED")
-{
-	Console.WriteLine("Loading templates into memory...");
-	Utilities.populate(ref Data.template_files, Data.template_dir);
-}
-if(Data.source_dir != "NOT_PROVIDED")
-{
-	Console.WriteLine("Loading source files into memory...");
-	Utilities.populate(ref Data.source_files, Data.source_dir);
-}
+Console.WriteLine("Loading templates into memory...");
+Utilities.populate(ref Data.template_files, Data.template_dir);
+
+Console.WriteLine("Loading source files into memory...");
+Utilities.populate(ref Data.source_files, Data.source_dir);
 
 Console.WriteLine("Copying directories to build dir...");
 Utilities.copy_dirs(Data.build_dir, Data.source_dir);

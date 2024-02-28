@@ -17,11 +17,11 @@ async function load_files(path, dictionary) {
 		return;
 	}
 
-	//read out filenames
+	//read all files recursively
 	for await(file of dir) {
 		if(file.isFile()) {
 			let name = file.path + "/" + file.name;
-			dictionary[name] = await fs.readFile(name);
+			dictionary[name] = (await fs.readFile(name)).toString("utf-8");
 		} else {
 			await load_files(file.path +"/" + file.name, dictionary);
 		}
@@ -30,9 +30,12 @@ async function load_files(path, dictionary) {
 
 let templates = {};
 load_files("old", templates)
+
 .catch((err) => {
 	console.log(`Something went wrong with loading templates: ${err}`);
+	templates = null;
 })
+
 .finally(() => {
-	console.log(templates["old/Program.cs"].toString());
+	console.log(templates["old/Program.cs"]);
 })

@@ -1,9 +1,10 @@
 const fs = require('node:fs/promises');
 
-var build_dir = "build";
-var src_dir = "src";
+var build_dir = "";
+var src_dir = "";
 var template_dir = "";
 var filetypes = [];
+var debug = false;
 
 //load files and their contents into a dictionary
 async function load_files(path, dictionary) {
@@ -55,6 +56,13 @@ function print_helptext() {
 	console.log();
 }
 
+function print_debug() {
+	console.log(`build dir: ${build_dir}`);
+	console.log(`source dir: ${src_dir}`);
+	console.log(`template dir: ${template_dir}`);
+	console.log(`filetypes: ${filetypes}`)
+}
+
 //extract data from command line arguments
 function handle_args() {
 	for(let i = 2; i < process.argv.length; i++) {
@@ -87,6 +95,11 @@ function handle_args() {
 				i++;
 			break;
 
+			case "--debug":
+			case "--d":
+				debug = true;
+			break;
+
 			case "--help":
 			case "-h":
 				print_helptext();
@@ -97,6 +110,7 @@ function handle_args() {
 			default:
 				console.log("Argument not recognized: '" + process.argv[i] + "'");
 				print_helptext();
+				process.exit(0);
 			break;
 		}
 	}
@@ -108,14 +122,15 @@ if(process.argv.length < 3) {
 	process.exit(0);
 }
 
+handle_args();
+
 //print error message if no template dir is given
 if(template_dir == "") {
 	console.log("You must at least specify a template directory to use web-gen.");
 	print_helptext();
+	process.exit(0);
 }
 
-handle_args();
-console.log(`build dir: ${build_dir}`);
-console.log(`source dir: ${src_dir}`);
-console.log(`template dir: ${template_dir}`);
-console.log(`filetypes: ${filetypes}`)
+if(debug) {
+	print_debug();
+}

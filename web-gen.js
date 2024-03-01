@@ -150,6 +150,25 @@ async function init(data) {
 	await load_files(data.src_file, data.source_files);
 }
 
+//apply indent to template file
+async function apply_indent(filename, indent, data) {
+	let lines = "";
+	let file = data.template_files[filename];
+
+	//file doesn't exist (shouldn't happen)
+	if(file == null) {
+		console.log(`Template file has not been loaded into memory: ${filename}`);
+		return "";
+	}
+
+	//add proper indent to the start of each line
+	file.split("\n").forEach((line) => {
+		lines += indent + line;
+	});
+
+	return lines;
+}
+
 //parse an individual file and perform replacements
 async function parse_file(filename, data) {
 	//check if file is loaded/exists
@@ -158,20 +177,24 @@ async function parse_file(filename, data) {
 		return;
 	}
 
-	output_file = ""
+	//file that will be written
+	output_file = "";
+	output_filename = "";
 
 	//iterate over lines
 	let lines = data.source_files[filename].split("\n");
-	lines.forEach((line) => {
+	lines.forEach(async (line) => {
 
 		//check for WGT tag group
 		let result = pattern.exec(line);
 
 		//match was found (we now need to replace it in the output)
 		if(result != null) {
-			let indentation = result[1];
+			let indent = result[1];
 			let template_name = result[2];
 
+			//insert template file into output stream
+			output_file += await apply_indent(template_name, indent, data);
 		//append the original line if no match was found
 		} else {
 			output_file += line;

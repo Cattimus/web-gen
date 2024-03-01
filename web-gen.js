@@ -166,7 +166,7 @@ async function init() {
 }
 
 //apply indent to template file
-async function apply_indent(filename, indent) {
+function apply_indent(filename, indent) {
 	let lines = "";
 	let file = gen_data.template_files[filename];
 
@@ -193,12 +193,12 @@ async function parse_file(filename) {
 	}
 
 	//file that will be written
-	output_file = "";
-	output_filename = gen_data.build_dir + filename.substr(gen_data.src_dir.length);
+	var output_file = "";
+	var output_filename = gen_data.build_dir + filename.substr(gen_data.src_dir.length);
 
 	//iterate over lines
 	let lines = gen_data.source_files[filename].split("\n");
-	lines.forEach(async (line) => {
+	lines.forEach((line) => {
 
 		//check for WGT tag group
 		let result = pattern.exec(line);
@@ -208,10 +208,9 @@ async function parse_file(filename) {
 			let indent = result[1];
 			let template_name = gen_data.template_dir + "/" + result[2];
 
-			let template = await apply_indent(template_name, indent);
-
 			//insert template file into output stream
-			output_file += template.toString();
+			output_file += apply_indent(template_name, indent);
+
 		//append the original line if no match was found
 		} else {
 			output_file += line + "\n";

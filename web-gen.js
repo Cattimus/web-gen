@@ -16,6 +16,8 @@ const pattern = /([ \t]*)(?:<WGT>)(.*)(?:<\/WGT>)/;
 
 //load files and their contents into a dictionary
 async function load_files(path, dictionary) {
+	console.log(`Attempting to load files at path: ${path}`);
+
 	let dir = await fs.opendir(path)
 	.catch((error) => {
 		console.log(`Unable to open directory: ${path}`)
@@ -109,6 +111,7 @@ async function handle_args(data) {
 			break;
 
 			case "--help":
+			case "--h":
 			case "-h":
 				print_helptext();
 				process.exit(0);
@@ -147,7 +150,7 @@ async function init(data) {
 
 	//load files into memory
 	await load_files(data.template_dir, data.template_files);
-	await load_files(data.src_file, data.source_files);
+	await load_files(data.src_dir, data.source_files);
 }
 
 //apply indent to template file
@@ -179,7 +182,7 @@ async function parse_file(filename, data) {
 
 	//file that will be written
 	output_file = "";
-	output_filename = "";
+	output_filename = data.build_dir + filename.substr(data.src_dir.length);
 
 	//iterate over lines
 	let lines = data.source_files[filename].split("\n");
@@ -200,4 +203,13 @@ async function parse_file(filename, data) {
 			output_file += line;
 		}
 	})
+
+	//write file to output folder
+	console.log(`Writing file: ${output_filename}`);
 }
+
+init(gen_data).then(() => {
+	for (const [key, value] of Object.entries(gen_data.source_files)) {
+		parse_file(key, gen_data);
+	}
+});

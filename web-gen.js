@@ -17,7 +17,7 @@ const pattern = /([ \t]*)(?:<WGT>)(.*)(?:<\/WGT>)/;
 
 //load files and their contents into a dictionary
 async function load_files(path, dictionary) {
-	console.log(`Attempting to load files at path: ${path}`);
+	console.log(`Attempting to load files from: ${path}`);
 
 	let dir = await fs.opendir(path)
 	.catch((error) => {
@@ -75,40 +75,40 @@ function print_debug() {
 }
 
 //extract data from command line arguments
-async function handle_args(data) {
+async function handle_args() {
 	for(let i = 2; i < process.argv.length; i++) {
 		switch(process.argv[i]) {
 			//template directory
 			case "-template":
 			case "-t":
-				data.template_dir = process.argv[i+1];
+				gen_data.template_dir = process.argv[i+1];
 				i++;
 			break;
 
 			//build directory
 			case "-build":
 			case "-b":
-				data.build_dir = process.argv[i+1];
+				gen_data.build_dir = process.argv[i+1];
 				i++;
 			break;
 
 			//source directory
 			case "-source":
 			case "-s":
-				data.src_dir = process.argv[i+1];
+				gen_data.src_dir = process.argv[i+1];
 				i++;
 			break;
 
 			//parse extensions
 			case "-parse":
 			case "-p":
-				data.filetypes = process.argv[i+1].split(",");
+				gen_data.filetypes = process.argv[i+1].split(",");
 				i++;
 			break;
 
 			case "--debug":
 			case "--d":
-				data.debug = true;
+				gen_data.debug = true;
 			break;
 
 			case "--help":
@@ -119,7 +119,7 @@ async function handle_args(data) {
 			break;
 
 			case "--dry-run":
-				data.dry_run = true;
+				gen_data.dry_run = true;
 			break;
 
 			//unrecognized argument
@@ -133,35 +133,42 @@ async function handle_args(data) {
 }
 
 //set up all arguments and file lists
-async function init(data) {
+async function init() {
 	//print helptext if no args are given
 	if(process.argv.length < 3) {
 		print_helptext();
 		process.exit(0);
 	}
 
-	await handle_args(data);
+	await handle_args();
 
 	//print error message if no template dir is given
-	if(data.template_dir == "") {
+	if(gen_data.template_dir == "") {
 		console.log("You must at least specify a template directory to use web-gen.");
 		print_helptext();
 		process.exit(0);
 	}
 
-	if(data.debug) {
+	if(gen_data.debug) {
 		print_debug();
 	}
 
+	if(gen_data.dry_run) {
+		console.log("This is a DRY RUN. That means no files will be written to disk or modified.");
+	} else {
+		//copy entire directory over
+		await fs.cp(gen_data.src_dir, gen_data.build_dir, {recursive: true});
+	}
+
 	//load files into memory
-	await load_files(data.template_dir, data.template_files);
-	await load_files(data.src_dir, data.source_files);
+	await load_files(gen_data.template_dir, gen_data.template_files);
+	await load_files(gen_data.src_dir, gen_data.source_files);
 }
 
 //apply indent to template file
-async function apply_indent(filename, indent, data) {
+async function apply_indent(filename, indent) {
 	let lines = "";
-	let file = data.template_files[filename];
+	let file = gen_data.template_files[filename];
 
 	//file doesn't exist (shouldn't happen)
 	if(file == null) {
@@ -171,28 +178,26 @@ async function apply_indent(filename, indent, data) {
 
 	//add proper indent to the start of each line
 	file.split("\n").forEach((line) => {
-		lines += indent + line;
+		lines += (indent + line + "\n");
 	});
 
 	return lines;
 }
 
 //parse an individual file and perform replacements
-async function parse_file(filename, data) {
-	console.log(`Processing file: ${filename}`);
-
+async function parse_file(filename) {
 	//check if file is loaded/exists
-	if(data.source_files[filename] == null) {
+	if(gen_data.source_files[filename] == null) {
 		console.log(`File has not been loaded into memory: ${filename}`);
 		return;
 	}
 
 	//file that will be written
 	output_file = "";
-	output_filename = data.build_dir + filename.substr(data.src_dir.length);
+	output_filename = gen_data.build_dir + filename.substr(gen_data.src_dir.length);
 
 	//iterate over lines
-	let lines = data.source_files[filename].split("\n");
+	let lines = gen_data.source_files[filename].split("\n");
 	lines.forEach(async (line) => {
 
 		//check for WGT tag group
@@ -201,18 +206,22 @@ async function parse_file(filename, data) {
 		//match was found (we now need to replace it in the output)
 		if(result != null) {
 			let indent = result[1];
-			let template_name = result[2];
+			let template_name = gen_data.template_dir + "/" + result[2];
+
+			let template = await apply_indent(template_name, indent);
 
 			//insert template file into output stream
-			output_file += await apply_indent(template_name, indent, data);
+			output_file += template.toString();
 		//append the original line if no match was found
 		} else {
-			output_file += line;
+			output_file += line + "\n";
 		}
 	})
 
-	//write file to output folder
-	if(!data.dry_run) {
+	//write file to output folder (only if it is going to be modified)
+	let extension = output_filename.split(".")[1];
+	if(!gen_data.dry_run && gen_data.filetypes.includes(extension)) {
+		console.log(`Writing file: ${output_filename}`);
 		await fs.writeFile(output_filename, output_file)
 
 		.catch((error) => {
@@ -221,14 +230,10 @@ async function parse_file(filename, data) {
 	}
 }
 
-init(gen_data)
+init()
 
 .then(() => {
 	for (const [key, value] of Object.entries(gen_data.source_files)) {
-		parse_file(key, gen_data);
+		parse_file(key);
 	}
-})
-
-.finally(() => {
-	console.log("Build complete.");
 });

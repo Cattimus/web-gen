@@ -6,6 +6,7 @@ const gen_data = {
 	template_dir: "",
 	filetypes: [],
 	debug: false,
+	dry_run: false,
 
 	template_files: {},
 	source_files: {}
@@ -117,6 +118,10 @@ async function handle_args(data) {
 				process.exit(0);
 			break;
 
+			case "--dry-run":
+				data.dry_run = true;
+			break;
+
 			//unrecognized argument
 			default:
 				console.log("Argument not recognized: '" + process.argv[i] + "'");
@@ -174,6 +179,8 @@ async function apply_indent(filename, indent, data) {
 
 //parse an individual file and perform replacements
 async function parse_file(filename, data) {
+	console.log(`Processing file: ${filename}`);
+
 	//check if file is loaded/exists
 	if(data.source_files[filename] == null) {
 		console.log(`File has not been loaded into memory: ${filename}`);
@@ -205,11 +212,23 @@ async function parse_file(filename, data) {
 	})
 
 	//write file to output folder
-	console.log(`Writing file: ${output_filename}`);
+	if(!data.dry_run) {
+		await fs.writeFile(output_filename, output_file)
+
+		.catch((error) => {
+			console.log(`Could not write output file for: ${filename}.`);
+		});
+	}
 }
 
-init(gen_data).then(() => {
+init(gen_data)
+
+.then(() => {
 	for (const [key, value] of Object.entries(gen_data.source_files)) {
 		parse_file(key, gen_data);
 	}
+})
+
+.finally(() => {
+	console.log("Build complete.");
 });

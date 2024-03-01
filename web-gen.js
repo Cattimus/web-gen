@@ -49,7 +49,7 @@ function print_helptext() {
 	console.log("Path to the folder that contains source files");
 	console.log();
 
-	console.log("-p,-parse (list,of,extensions)");
+	console.log("-f,-filetypes (list,of,extensions)");
 	console.log("Tell web-gen which types of files you want to be run through the parser.");
 	console.log();
 

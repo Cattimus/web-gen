@@ -100,8 +100,8 @@ async function handle_args() {
 			break;
 
 			//parse extensions
-			case "-parse":
-			case "-p":
+			case "-filetypes":
+			case "-f":
 				gen_data.filetypes = process.argv[i+1].split(",");
 				i++;
 			break;
@@ -158,6 +158,12 @@ async function init() {
 	} else {
 		//copy entire directory over
 		await fs.cp(gen_data.src_dir, gen_data.build_dir, {recursive: true});
+	}
+
+	if(gen_data.filetypes.length == 0) {
+		console.log("[WARNING] No file types have been passed so web-gen will not check any files.");
+		console.log("You can pass filetypes to check with the -f option.");
+		console.log();
 	}
 
 	//load files into memory
